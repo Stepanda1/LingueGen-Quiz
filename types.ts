@@ -34,8 +34,15 @@ export interface TheoryContent {
   examples: string[];
 }
 
+export interface VocabularyItem {
+  word: string;
+  translation: string;
+  context: string;
+}
+
 export interface GeneratedContent {
-  theory: TheoryContent;
+  theory?: TheoryContent;
+  vocabulary?: VocabularyItem[];
   questions: QuizQuestion[];
 }
 

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Difficulty, QuizType, QuizQuestion } from '../types';
+import { Difficulty, QuizType, QuizQuestion, VocabularyItem } from '../types';
 import { Button } from './Button';
-import { RefreshCw, Home, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { RefreshCw, Home, CheckCircle2, XCircle, HelpCircle, BookOpen } from 'lucide-react';
 
 interface ResultsScreenProps {
   questions: QuizQuestion[];
   userAnswers: number[];
   difficulty: Difficulty;
   type: QuizType;
+  vocabulary?: VocabularyItem[] | null;
   onRetry: () => void;
   onNew: () => void;
 }
@@ -17,16 +18,49 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   userAnswers,
   difficulty,
   type,
+  vocabulary,
   onRetry,
   onNew,
 }) => {
-  // Calculate score
+  
+  // Handle Vocabulary Completion (No Score)
+  if (type === QuizType.Vocabulary && vocabulary) {
+    return (
+      <div className="w-full max-w-3xl animate-in zoom-in duration-300 flex flex-col gap-6">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-12 text-center">
+          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <BookOpen className="w-12 h-12 text-emerald-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">Session Complete!</h2>
+          <p className="text-slate-500 text-lg mb-6">
+            You have reviewed {vocabulary.length} new words.
+          </p>
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-8">
+            <p className="text-sm text-slate-600">
+              Great job! Repetition is key to language learning. Feel free to start another session to expand your vocabulary further.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button onClick={onRetry} variant="primary" className="w-full sm:w-auto px-8">
+              Study New Words
+            </Button>
+            <Button onClick={onNew} variant="outline" className="w-full sm:w-auto px-8">
+              Main Menu
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard Quiz Logic
   const score = questions.reduce((acc, question, idx) => {
     return question.correctAnswerIndex === userAnswers[idx] ? acc + 1 : acc;
   }, 0);
   
   const total = questions.length;
-  const percentage = Math.round((score / total) * 100);
+  const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
   
   let feedback = "";
   let colorClass = "";
@@ -138,11 +172,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                           style = "bg-rose-50 border-rose-200 text-rose-800 font-medium ring-1 ring-rose-200";
                           icon = <XCircle className="w-5 h-5 text-rose-600" />;
                         } 
-                        // User selected correct answer (already handled by first if, but ensure visuals match)
-                        else if (optIdx === userAnswer && isCorrect) {
-                           // Handled above
-                        }
-
+                        
                         return (
                           <div key={optIdx} className={`p-3 rounded-lg border flex justify-between items-center ${style}`}>
                             <span>{opt}</span>

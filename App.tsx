@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { AppState, QuizConfig, QuizQuestion, TheoryContent } from './types';
+import { AppState, QuizConfig, QuizQuestion, TheoryContent, VocabularyItem, QuizType } from './types';
 import { generateQuiz } from './services/geminiService';
 import { SetupScreen } from './components/SetupScreen';
 import { TheoryScreen } from './components/TheoryScreen';
 import { QuizCard } from './components/QuizCard';
+import { VocabularyFlashcard } from './components/VocabularyFlashcard';
 import { ResultsScreen } from './components/ResultsScreen';
 import { Button } from './components/Button';
 import { AlertTriangle } from 'lucide-react';
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   
   // State for content
   const [theory, setTheory] = useState<TheoryContent | null>(null);
+  const [vocabulary, setVocabulary] = useState<VocabularyItem[] | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   
   // State for quiz progress
@@ -29,15 +31,23 @@ const App: React.FC = () => {
     try {
       const content = await generateQuiz(newConfig.difficulty, newConfig.type, newConfig.topic);
       
-      setTheory(content.theory);
+      setTheory(content.theory || null);
+      setVocabulary(content.vocabulary || null);
       setQuestions(content.questions);
       
       // Reset quiz progress
       setCurrentQuestionIndex(0);
       setUserAnswers([]);
       
-      // Go to Theory screen first
-      setAppState(AppState.Theory);
+      // Routing logic
+      if (newConfig.type === QuizType.Vocabulary) {
+        // Vocabulary mode skips theory and goes straight to flashcards
+        setAppState(AppState.Quiz);
+      } else {
+        // Other modes show theory first
+        setAppState(AppState.Theory);
+      }
+
     } catch (err) {
       console.error(err);
       setError("Failed to generate content. Please check your connection or try a different topic.");
@@ -61,6 +71,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleVocabularyNext = () => {
+    if (vocabulary && currentQuestionIndex < vocabulary.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setAppState(AppState.Results);
+    }
+  };
+
   const handleRetry = () => {
     if (config) {
       startProcess(config);
@@ -74,6 +92,7 @@ const App: React.FC = () => {
     setConfig(null);
     setQuestions([]);
     setTheory(null);
+    setVocabulary(null);
     setUserAnswers([]);
   };
 
@@ -94,25 +113,38 @@ const App: React.FC = () => {
                <div className="absolute inset-0 border-t-4 border-indigo-600 rounded-full animate-spin"></div>
              </div>
              <h2 className="text-2xl font-bold text-slate-700 mb-2">Preparing Lesson</h2>
-             <p className="text-slate-500">Consulting the textbook & generating questions...</p>
+             <p className="text-slate-500">Creating your custom learning experience...</p>
           </div>
         )}
 
         {appState === AppState.Theory && theory && (
           <TheoryScreen 
             theory={theory} 
+            vocabulary={null}
             onStartQuiz={handleStartQuiz} 
           />
         )}
 
-        {appState === AppState.Quiz && questions.length > 0 && (
-          <QuizCard
-            key={currentQuestionIndex}
-            question={questions[currentQuestionIndex]}
-            currentNumber={currentQuestionIndex + 1}
-            totalQuestions={questions.length}
-            onSubmit={handleQuestionSubmit}
-          />
+        {appState === AppState.Quiz && (
+          config?.type === QuizType.Vocabulary && vocabulary ? (
+             <VocabularyFlashcard 
+                key={currentQuestionIndex}
+                item={vocabulary[currentQuestionIndex]}
+                currentNumber={currentQuestionIndex + 1}
+                total={vocabulary.length}
+                onNext={handleVocabularyNext}
+             />
+          ) : (
+             questions.length > 0 && (
+              <QuizCard
+                key={currentQuestionIndex}
+                question={questions[currentQuestionIndex]}
+                currentNumber={currentQuestionIndex + 1}
+                totalQuestions={questions.length}
+                onSubmit={handleQuestionSubmit}
+              />
+             )
+          )
         )}
 
         {appState === AppState.Results && config && (
@@ -123,6 +155,7 @@ const App: React.FC = () => {
             type={config.type}
             onRetry={handleRetry}
             onNew={handleNew}
+            vocabulary={vocabulary}
           />
         )}
 

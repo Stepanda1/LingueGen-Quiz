@@ -56,23 +56,28 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { val: QuizType.Grammar, icon: <Brain size={18} /> },
-              { val: QuizType.Vocabulary, icon: <BookOpen size={18} /> },
-              { val: QuizType.Idioms, icon: <Zap size={18} /> },
-              { val: QuizType.PhrasalVerbs, icon: <GraduationCap size={18} /> },
+              { val: QuizType.Grammar, icon: <Brain size={18} />, disabled: false },
+              { val: QuizType.Vocabulary, icon: <BookOpen size={18} />, disabled: false },
+              { val: QuizType.Idioms, icon: <Zap size={18} />, disabled: true },
+              { val: QuizType.PhrasalVerbs, icon: <GraduationCap size={18} />, disabled: true },
             ].map((item) => (
               <button
                 key={item.val}
                 type="button"
-                onClick={() => setType(item.val)}
+                disabled={item.disabled}
+                onClick={() => !item.disabled && setType(item.val)}
                 className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  type === item.val
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                    : 'border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50'
+                  item.disabled 
+                    ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed opacity-70'
+                    : type === item.val
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                      : 'border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 {item.icon}
-                <span className="text-xs font-semibold">{item.val}</span>
+                <span className="text-xs font-semibold">
+                  {item.disabled ? 'Updating' : item.val}
+                </span>
               </button>
             ))}
           </div>
