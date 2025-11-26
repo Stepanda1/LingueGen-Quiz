@@ -40,16 +40,18 @@ export const generateQuiz = async (
 
   if (isVocabulary) {
     prompt = `
-      You are an expert English teacher. Create a vocabulary lesson for a student.
+      You are an expert English teacher. Create a "Fill in the Blank" vocabulary challenge.
       
       Task 1: Generate a list of 20 RANDOM English words appropriate for ${difficulty} level.
       They can be any part of speech (noun, verb, adjective, etc.).
-      For each word provide:
-      - The word itself.
-      - A Russian translation (as requested by the user).
-      - A context sentence in English showing how it is used.
+      
+      For each item provide:
+      - The target word (the answer).
+      - A Russian translation of the target word.
+      - A sentence where the target word is strictly replaced by "_______" (7 underscores). 
+        The sentence must provide enough context to guess the word.
 
-      Task 2: Return an empty array for "questions". We are doing a flashcard study session, so no quiz questions are needed.
+      Task 2: Return an empty array for "questions".
       
       Level: ${difficulty}
       ${topicString}
@@ -63,11 +65,11 @@ export const generateQuiz = async (
           items: {
             type: Type.OBJECT,
             properties: {
-              word: { type: Type.STRING },
+              word: { type: Type.STRING, description: "The correct English word to fill in." },
               translation: { type: Type.STRING, description: "Russian translation of the word" },
-              context: { type: Type.STRING, description: "English sentence using the word" }
+              sentenceWithBlank: { type: Type.STRING, description: "The English sentence with the word replaced by _______" }
             },
-            required: ["word", "translation", "context"]
+            required: ["word", "translation", "sentenceWithBlank"]
           },
           description: "List of 20 vocabulary items"
         },

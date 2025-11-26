@@ -37,7 +37,7 @@ export interface TheoryContent {
 export interface VocabularyItem {
   word: string;
   translation: string;
-  context: string;
+  sentenceWithBlank: string; // The sentence with the word masked
 }
 
 export interface GeneratedContent {
